@@ -39,8 +39,7 @@ else:
 
 class Actor(RLNN):
 
-    def __init__(self, state_dim, action_dim, max_action, hidden_size, mpc_horizon, layer_norm, actor_lr,
-                 tau, discount):
+    def __init__(self, state_dim, action_dim, max_action, hidden_size, mpc_horizon, layer_norm, actor_lr):
         super(Actor, self).__init__(state_dim, action_dim, max_action)
 
         self.discrete = False
@@ -70,8 +69,6 @@ class Actor(RLNN):
         self.layer_norm = layer_norm
 
         self.optimizer = torch.optim.Adam(self.parameters(), lr=actor_lr)
-        self.tau = tau
-        self.discount = discount
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.max_action = max_action
@@ -121,8 +118,7 @@ class Actor(RLNN):
 
 class Critic(RLNN):
     
-    def __init__(self, state_dim, action_dim, max_action, hidden_size, mpc_horizon, layer_norm, critic_lr, 
-                 tau, discount):
+    def __init__(self, state_dim, action_dim, max_action, hidden_size, mpc_horizon, layer_norm, critic_lr):
         super(Critic, self).__init__(state_dim, action_dim, 1)
 
         self.discrete = False
@@ -151,8 +147,6 @@ class Critic(RLNN):
 
         self.layer_norm = layer_norm
         self.optimizer = torch.optim.Adam(self.parameters(), lr=critic_lr)
-        self.tau = tau
-        self.discount = discount
         self.state_dim = state_dim
         self.action_dim = action_dim
         self.max_action = max_action
@@ -200,10 +194,11 @@ class Critic(RLNN):
 
 
 class ModelBasedCEMRLAgent(ModelBasedAgent):
-    def __init__(self, env, model, mem_size, gauss_sigma, sigma_init, damp, damp_limit, pop_size, elitism, 
-                 max_steps, start_steps, n_grad, actor_lr, batch_size, n_noisy, n_episodes, 
-                 period, n_eval, output, save_all_models, layer_norm, critic_lr, tau, discount, mpc_horizon,
-                 window_length, hidden_size, temperature_center):
+    def __init__(self, env, model, actor_lr, critic_lr, batch_size, mpc_horizon, window_length, 
+                 hidden_size, layer_norm, temperature_center, pop_size, mem_size, gauss_sigma, 
+                 sigma_init, damp, damp_limit, elitism, 
+                 max_steps, start_steps, n_grad, n_noisy, n_episodes, 
+                 period, n_eval, output, save_all_models):
         super(ModelBasedCEMRLAgent, self).__init__(model=model)
         self.output = output
         self.env = env
@@ -213,27 +208,18 @@ class ModelBasedCEMRLAgent(ModelBasedAgent):
             for key, value in vars(self).items():
                 file.write("{} = {}\n".format(key, value))
         self.model = model
+        self.actor_lr = actor_lr
         self.mem_size = mem_size
-        self.gauss_sigma = gauss_sigma
-        self.sigma_init = sigma_init
-        self.damp = damp
-        self.damp_limit = damp_limit
         self.pop_size = pop_size
-        self.elitism = elitism
         self.max_steps = max_steps
         self.start_steps = start_steps
         self.n_grad = n_grad
-        self.actor_lr = actor_lr
         self.batch_size = batch_size      
         self.n_noisy = n_noisy
         self.n_episodes = n_episodes
         self.period = period
         self.n_eval = n_eval
         self.save_all_models = save_all_models
-        self.layer_norm = layer_norm
-        self.critic_lr = critic_lr
-        self.tau = tau
-        self.discount = discount
         self.mpc_horizon = mpc_horizon
         self.window_length = window_length
         self.evaluate_first_call = True
@@ -251,19 +237,19 @@ class ModelBasedCEMRLAgent(ModelBasedAgent):
         self.memory = Memory(memory_size=self.mem_size, state_dim=self.state_dim, action_dim=self.action_dim, 
                              window_length=self.window_length, mpc_horizon=self.mpc_horizon)
         self.critic = Critic(state_dim=self.state_dim, action_dim=self.action_dim, max_action=self.max_action, hidden_size=self.hidden_size,
-                             mpc_horizon=self.mpc_horizon, layer_norm=self.layer_norm, critic_lr=self.critic_lr, tau=self.tau, discount=self.discount)
+                             mpc_horizon=self.mpc_horizon, layer_norm=layer_norm, critic_lr=critic_lr)
         self.actor = Actor(state_dim=self.state_dim, action_dim=self.action_dim, max_action=self.max_action, hidden_size=self.hidden_size, 
-                           mpc_horizon=self.mpc_horizon, layer_norm=self.layer_norm, actor_lr=self.actor_lr, tau=self.tau, discount=self.discount)
-        self.a_noise = GaussianNoise(self.action_dim, sigma=self.gauss_sigma)
+                           mpc_horizon=self.mpc_horizon, layer_norm=layer_norm, actor_lr=actor_lr)
+        self.a_noise = GaussianNoise(self.action_dim, sigma=gauss_sigma)
 
         if USE_CUDA:
             self.critic.cuda()
             self.actor.cuda()
 
         # CEM
-        self.es = sepCEM(self.actor.get_size(), mu_init=self.actor.get_params(), sigma_init=self.sigma_init, damp=self.damp, 
-                         damp_limit=self.damp_limit, pop_size=self.pop_size, antithetic=not self.pop_size % 2, 
-                         parents=self.pop_size // 2, elitism=self.elitism)
+        self.es = sepCEM(self.actor.get_size(), mu_init=self.actor.get_params(), sigma_init=sigma_init, damp=damp, 
+                         damp_limit=damp_limit, pop_size=self.pop_size, antithetic=not self.pop_size % 2, 
+                         parents=self.pop_size // 2, elitism=elitism)
         self.sampler = IMSampler(self.es)
 
         self.df = pd.DataFrame(columns=["total_steps", "average_score", 

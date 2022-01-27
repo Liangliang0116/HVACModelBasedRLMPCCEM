@@ -56,32 +56,31 @@ def train(args, checkpoint_path=None):
     if args['algorithm'] == 'cem_rl':
         agent = ModelBasedCEMRLAgent(env=env, 
                                      model=model, 
+                                     actor_lr=args['actor_lr'],
+                                     critic_lr=args['critic_lr'], 
+                                     batch_size=args['batch_size'], 
+                                     mpc_horizon=args['mpc_horizon'], 
+                                     window_length=args['window_length'], 
+                                     hidden_size=32, 
+                                     layer_norm=args['layer_norm'], 
+                                     temperature_center=args['temp_center'],
+                                     pop_size=args['pop_size'], 
                                      mem_size=args['mem_size'], 
                                      gauss_sigma=args['gauss_sigma'], 
                                      sigma_init=args['sigma_init'], 
                                      damp=args['damp'], 
                                      damp_limit=args['damp_limit'], 
-                                     pop_size=args['pop_size'], 
                                      elitism=args['elitism'],
                                      max_steps=args['max_steps'], 
                                      start_steps=args['start_steps'], 
                                      n_grad=args['n_grad'], 
-                                     actor_lr=args['actor_lr'], 
-                                     batch_size=args['batch_size'], 
                                      n_noisy=args['n_noisy'], 
                                      n_episodes=args['n_episodes'], 
                                      period=args['period'], 
                                      n_eval=args['n_eval'], 
                                      output=args['output'], 
-                                     save_all_models=args['save_all_models'], 
-                                     layer_norm=args['layer_norm'], 
-                                     critic_lr=args['critic_lr'], 
-                                     tau=args['tau'], 
-                                     discount=args['discount'], 
-                                     mpc_horizon=args['mpc_horizon'], 
-                                     window_length=args['window_length'], 
-                                     hidden_size=32, 
-                                     temperature_center=args['temp_center'])
+                                     save_all_models=args['save_all_models']
+                                     )
 
     else:
         action_sampler = UniformSampler(low=env.action_space.low, high=env.action_space.high)
@@ -168,8 +167,6 @@ def make_parser():
     # DDPG parameters
     parser.add_argument('--actor_lr', default=0.001, type=float, help='learning rate for actor')
     parser.add_argument('--critic_lr', default=0.001, type=float, help='learning rate for critic')
-    parser.add_argument('--discount', default=0.99, type=float)
-    parser.add_argument('--tau', default=0.005, type=float)
     parser.add_argument('--layer_norm', dest='layer_norm', action='store_true', help='indicator wheather to use layer normalization')
     parser.add_argument('--gauss_sigma', default=0.1, type=float)
 
