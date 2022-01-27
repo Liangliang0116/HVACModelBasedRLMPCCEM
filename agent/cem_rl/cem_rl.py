@@ -146,16 +146,13 @@ class Critic(RLNN):
 
 
 class ModelBasedCEMRLAgent(ModelBasedAgent):
-    def __init__(self, env, model, actor_lr, critic_lr, mpc_horizon, window_length, 
-                 layer_norm, temperature_center, pop_size, mem_size, gauss_sigma, 
-                 sigma_init, damp, damp_limit, elitism,
-                 period, output, save_all_models):
+    def __init__(self, env, model, actor_lr, critic_lr, mpc_horizon, window_length, layer_norm, 
+                 temperature_center, pop_size, mem_size, gauss_sigma, sigma_init, damp, damp_limit, 
+                 elitism, period, log_dir, save_all_models):
         super(ModelBasedCEMRLAgent, self).__init__(model=model)
-        self.output = output
         self.env = env
-        self.env_name = self.env.__class__.__name__
-        self.output = get_output_folder(self.output, self.env_name)
-        with open(self.output + "/parameters.txt", 'w') as file:
+        self.log_dir = get_output_folder(log_dir, self.env.city)
+        with open(self.log_dir + "/parameters.txt", 'w') as file:
             for key, value in vars(self).items():
                 file.write("{} = {}\n".format(key, value))
         self.model = model
@@ -194,7 +191,6 @@ class ModelBasedCEMRLAgent(ModelBasedAgent):
                          damp_limit=damp_limit, pop_size=self.pop_size, antithetic=not self.pop_size % 2, 
                          parents=self.pop_size // 2, elitism=elitism)
         self.sampler = IMSampler(self.es)
-
         self.df = pd.DataFrame(columns=["total_steps", "average_score", "average_score_rl", 
                                         "average_score_ea", "best_score"])
         self.old_es_params = []
@@ -396,7 +392,7 @@ class ModelBasedCEMRLAgent(ModelBasedAgent):
                 f_mu, _ = self.evaluate(actor=self.actor, n_episodes=n_eval)
                 prRed('Actor Mu Average Fitness:{}'.format(f_mu))
 
-                self.df.to_pickle(self.output + "/log.pkl")
+                self.df.to_pickle(self.log_dir + "/log.pkl")
                 res = {"total_steps": total_steps,
                        "average_score": np.mean(fitness),
                        "average_score_half": np.mean(np.partition(fitness, self.pop_size // 2 - 1)[self.pop_size // 2:]),
@@ -407,14 +403,14 @@ class ModelBasedCEMRLAgent(ModelBasedAgent):
                        "n_reused": n_r}
 
                 if self.save_all_models:
-                    os.makedirs(self.output + "/{}_steps".format(total_steps), exist_ok=True)
-                    self.critic.save_model(self.output + "/{}_steps".format(total_steps), "critic")
+                    os.makedirs(self.log_dir + "/{}_steps".format(total_steps), exist_ok=True)
+                    self.critic.save_model(self.log_dir + "/{}_steps".format(total_steps), "critic")
                     self.actor.set_params(self.es.mu)
-                    self.actor.save_model(self.output + "/{}_steps".format(total_steps), "actor_mu")
+                    self.actor.save_model(self.log_dir + "/{}_steps".format(total_steps), "actor_mu")
                 else:
-                    self.critic.save_model(self.output, "critic")
+                    self.critic.save_model(self.log_dir, "critic")
                     self.actor.set_params(self.es.mu)
-                    self.actor.save_model(self.output, "actor")
+                    self.actor.save_model(self.log_dir, "actor")
                 self.df = self.df.append(res, ignore_index=True)
                 step_cpt = 0
                 print(res)
