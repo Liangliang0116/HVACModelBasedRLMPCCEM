@@ -96,12 +96,8 @@ class LSTMImitationModule(nn.Module):
         )
 
     def forward(self, history_states, history_actions, states):
-        # print('history_states.shape =', history_states.shape)
-        # > history_states.shape = torch.Size([1, 19, 9])
-        # print('history_actions.shape =', history_actions.shape)
-        # > history_actions.shape = torch.Size([1, 19, 4])
-        feature = torch.cat((history_states, history_actions), dim=-1)  # (b, T, 10)
-        output, _ = self.lstm.forward(feature)  # (b, hidden_size)
+        feature = torch.cat((history_states, history_actions), dim=-1)
+        output, _ = self.lstm.forward(feature)
         output = self.drop_out.forward(output)
         output = output[:, -1, :]
         output = torch.cat((output, states), dim=-1)
@@ -132,9 +128,6 @@ class HistoryImitationPolicy(ContinuousImitationPolicy):
         t = range(epoch)
         if verbose:
             t = tqdm(t)
-
-        # print('dataset =', dataset)
-        # > dataset = <agent.agent.StateActionPairDataset object at 0x7fb326d86100>
 
         train_data_loader, val_data_loader = dataset.random_iterator(batch_size=batch_size)
 
@@ -206,10 +199,6 @@ class ModelBasedHistoryDaggerAgent(ModelBasedDAggerAgent):
             history_state = np.array(self.history_states)
             history_action = np.array(self.history_actions)
             action = self.planner.predict(history_state, history_action, state, weather_index)
-            
-            # print('self.planner =', self.planner)
-            # > self.planner = <agent.planner.BestRandomActionHistoryPlanner object at 0x7fc190216e80>
-                    
             self.state_action_dataset.add(history_state=history_state,
                                           history_action=history_action,
                                           state=state,

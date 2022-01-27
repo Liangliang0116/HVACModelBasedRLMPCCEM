@@ -8,7 +8,7 @@ from agent.utils import EpisodicHistoryDataset
 from agent.sampler import Sampler
 from gym_energyplus import make_env, ALL_CITIES
 from outdoor_temp_extract import outdoor_temp_interpolate_and_extract
-from cem_rl.es_grad_im import ModelBasedCEMRLAgent
+from agent.cem_rl.cem_rl import ModelBasedCEMRLAgent
 
 
 def train(args, checkpoint_path=None):
@@ -58,10 +58,8 @@ def train(args, checkpoint_path=None):
                                      model=model, 
                                      actor_lr=args['actor_lr'],
                                      critic_lr=args['critic_lr'], 
-                                     batch_size=args['batch_size'], 
                                      mpc_horizon=args['mpc_horizon'], 
                                      window_length=args['window_length'], 
-                                     hidden_size=32, 
                                      layer_norm=args['layer_norm'], 
                                      temperature_center=args['temp_center'],
                                      pop_size=args['pop_size'], 
@@ -71,13 +69,7 @@ def train(args, checkpoint_path=None):
                                      damp=args['damp'], 
                                      damp_limit=args['damp_limit'], 
                                      elitism=args['elitism'],
-                                     max_steps=args['max_steps'], 
-                                     start_steps=args['start_steps'], 
-                                     n_grad=args['n_grad'], 
-                                     n_noisy=args['n_noisy'], 
-                                     n_episodes=args['n_episodes'], 
                                      period=args['period'], 
-                                     n_eval=args['n_eval'], 
                                      output=args['output'], 
                                      save_all_models=args['save_all_models']
                                      )
@@ -116,7 +108,13 @@ def train(args, checkpoint_path=None):
                                 verbose=args['verbose'])
         
         if args['algorithm'] == 'cem_rl':
-            agent.fit_policy()
+            agent.fit_policy(batch_size=args['batch_size'],
+                             n_grad=args['n_grad'],
+                             max_steps=args['max_steps'], 
+                             start_steps=args['start_steps'], 
+                             n_episodes=args['n_episodes'], 
+                             n_noisy=args['n_noisy'], 
+                             n_eval=args['n_eval'])
         else: 
             agent.fit_policy(dataset=dataset, 
                              epoch=args['training_epochs'], 
@@ -161,8 +159,6 @@ def make_parser():
     
     parser.add_argument('--training_epochs', type=int, default=60, help='training epochs')
     parser.add_argument('--batch_size', default=128, type=int, help='training batch size for both dynamics model and policy')
-    
-    parser.add_argument('--start_steps', default=10000, type=int)
 
     # DDPG parameters
     parser.add_argument('--actor_lr', default=0.001, type=float, help='learning rate for actor')
@@ -173,21 +169,24 @@ def make_parser():
     # Evolutionary strategy parameters
     parser.add_argument('--pop_size', default=10, type=int, help='size of the evolutionary population')
     parser.add_argument('--elitism', dest="elitism",  action='store_true')
-    parser.add_argument('--n_grad', default=5, type=int)
+    parser.add_argument('--n_grad', default=5, type=int, help='number of actors that use gradient steps to optimize')
     parser.add_argument('--sigma_init', default=1e-3, type=float)
     parser.add_argument('--damp', default=1e-3, type=float)
     parser.add_argument('--damp_limit', default=1e-5, type=float)
 
     # Training parameters
-    parser.add_argument('--n_episodes', default=100, type=int)
-    parser.add_argument('--max_steps', default=1000000, type=int)
+    parser.add_argument('--n_episodes', default=100, type=int, help='number of evaluation episodes in each time')
+    parser.add_argument('--start_steps', default=10000, type=int, 
+                        help='step index after which the actors and critics will be updated when training the cem_rl policy')
+    parser.add_argument('--max_steps', default=1000000, type=int, help='maximum number of iteration steps when training the cem_rl policy')
     parser.add_argument('--mem_size', default=20000, type=int)
-    parser.add_argument('--n_noisy', default=0, type=int)
+    parser.add_argument('--n_noisy', default=0, type=int, help='number of noisy actors')
+    parser.add_argument('--n_eval', default=10, type=int, 
+                        help='number of evaluation episodes in when evaluating the actors after training when training the cem_rl policy')
 
     # misc
     parser.add_argument('--output', default='results/', type=str)
     parser.add_argument('--period', default=5000, type=int)
-    parser.add_argument('--n_eval', default=10, type=int)
     parser.add_argument('--save_all_models', dest="save_all_models", action="store_true")
     parser.add_argument('--verbose', dest="verbose", action="store_true")
 
