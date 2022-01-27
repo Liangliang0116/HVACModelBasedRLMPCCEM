@@ -51,7 +51,7 @@ class LSTMAttention(nn.Module):
         r = torch.bmm(alpha, M).squeeze(dim=1)
         h = torch.tanh(r)
         h = self.dropout.forward(h)
-        score = self.out_linear.forward(h)
+        score = self.out_linear.forward(h) 
 
         return score
 
