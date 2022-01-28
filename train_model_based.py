@@ -21,7 +21,10 @@ def train(args, checkpoint_path=None):
     num_on_policy_iters = (365 * args['num_years'] // args['num_days_per_episodes'] -
                            args['num_init_random_rollouts']) // args['num_days_on_policy']
 
-    log_dir = args['log_dir'] + '{}/{}'.format('_'.join(args['city']), args['algorithm'])
+    if args['new_log_dir']:
+        log_dir = args['log_dir'] + '{}/{}/{}'.format('_'.join(args['city']), args['algorithm'], time.strftime("%Y%m%d-%H%M%S"))
+    else:
+        log_dir = args['log_dir'] + '{}/{}'.format('_'.join(args['city']), args['algorithm'])
 
     env = make_env(cities=args['city'], 
                    temperature_center=args['temp_center'], 
@@ -221,6 +224,7 @@ def make_parser():
 
     # misc
     parser.add_argument('--log_dir', default='results/', type=str)
+    parser.add_argument('--new_log_dir', dest='new_log_dir', action='store_true')
     parser.add_argument('--period', default=5000, type=int)
     parser.add_argument('--save_all_models', dest="save_all_models", action="store_true")
     parser.add_argument('--verbose', dest="verbose", action="store_true")
