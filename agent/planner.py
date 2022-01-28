@@ -64,6 +64,7 @@ class BestRandomActionHistoryPlanner(BestRandomActionPlanner):
         current_action = np.tile(history_actions, (self.num_random_action_selection, 1, 1))
         current_action = convert_numpy_to_tensor(current_action)
 
+        self.model.eval()
         with torch.no_grad():
             cost = torch.zeros(size=(self.num_random_action_selection,)).type(FloatTensor)
             for i in range(self.horizon):
@@ -79,4 +80,7 @@ class BestRandomActionHistoryPlanner(BestRandomActionPlanner):
 
             best_action = actions[0, torch.argmin(cost, dim=0)]
             best_action = best_action.cpu().numpy()
-            return best_action
+        
+        self.model.train()    
+        
+        return best_action

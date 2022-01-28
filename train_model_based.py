@@ -46,7 +46,8 @@ def train(args, checkpoint_path=None):
     baseline_agent = RandomAgent(env.action_space)
     dataset = EpisodicHistoryDataset(maxlen=dataset_maxlen, 
                                      window_length=args['window_length'])
-
+    
+    """ -------------- Obtain initial random samples from the environment -------------- """
     logger.log("Obtaining random samples from the environment...")
     sampler = Sampler(env=env, 
                       window_length=args['window_length'], 
@@ -100,8 +101,7 @@ def train(args, checkpoint_path=None):
                                                  window_length=args['window_length'], 
                                                  baseline_agent=baseline_agent,
                                                  state_dim=env.observation_space.shape[0],
-                                                 action_dim=env.action_space.shape[0],
-                                                 hidden_size=32)
+                                                 action_dim=env.action_space.shape[0])
         else:
             agent = ModelBasedHistoryPlanAgent(model=model, 
                                                planner=planner, 
@@ -135,8 +135,7 @@ def train(args, checkpoint_path=None):
                              n_noisy=args['n_noisy'], 
                              n_eval=args['n_eval'])
         elif args['algorithm'] == 'imitation_learning':
-            agent.fit_policy(dataset=dataset, 
-                             epoch=args['training_epochs'], 
+            agent.fit_policy(epoch=args['training_epochs'], 
                              batch_size=args['batch_size'], 
                              verbose=args['verbose'])
         logger.record_tabular('Time-PolicyFit', time.time() - time_fit_policy_start)
@@ -149,7 +148,7 @@ def train(args, checkpoint_path=None):
                                            max_rollout_length=max_rollout_length)
         logger.record_tabular('Time-EnvSampling', time.time() - time_env_sampling_start)
             
-        """ ------------------- Other logging ------------------- """
+        """ ------------------- Other loggings ------------------- """
         logger.logkv('Iteration Index', num_iter + 1)
         logger.logkv('Time', time.time() - start_time)
         logger.logkv('Iteration Time', time.time() - itr_start_time)

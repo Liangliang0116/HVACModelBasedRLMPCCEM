@@ -1,5 +1,4 @@
 from collections import deque
-
 import numpy as np
 import torch
 import torch.nn as nn
@@ -173,27 +172,39 @@ class HistoryImitationPolicy(ContinuousImitationPolicy):
 
 
 class ModelBasedHistoryDaggerAgent(ModelBasedDAggerAgent):
-    def __init__(self, model, planner, policy_data_size, window_length, baseline_agent, state_dim, action_dim,
-                 hidden_size=32):
-        policy = HistoryImitationPolicy(state_dim=state_dim, action_dim=action_dim, hidden_size=hidden_size)
+    def __init__(self, model, planner, policy_data_size, window_length, baseline_agent, 
+                 state_dim, action_dim, hidden_size=32):
+        """ Initialize an instance of the class.
+
+        Args:
+            model: learned dynamics model
+            planner: MPC planner to obtain an action under a certain state and historical observations
+            policy_data_size (int): maximum of the dataset to train the network of imitation learning 
+            window_length (int): length of historical data
+            baseline_agent: agent to collect initial dataset for imitation learning
+            state_dim (int): state dimension of the environment
+            action_dim (int): action dimension of the environment
+            hidden_size (int, optional): hidden size of the neural network of imitation learning. Defaults to 32.
+        """
+        policy = HistoryImitationPolicy(state_dim=state_dim, 
+                                        action_dim=action_dim, 
+                                        hidden_size=hidden_size)
         super(ModelBasedHistoryDaggerAgent, self).__init__(model, planner, policy, policy_data_size)
         self.history_states = deque(maxlen=window_length - 1)
         self.history_actions = deque(maxlen=window_length - 1)
         self.baseline_agent = baseline_agent
-
         self.state_action_dataset = StateActionPairDataset(max_size=policy_data_size)
 
     def predict(self, state, weather_index):
-        """ When collecting on policy data, we also bookkeeping optimal state, action pair
-            (s, a) for training dagger model.
+        """[summary]
 
         Args:
-            state: (state_dim,)
+            state (np.ndarray): state for which an action needs to be obtained
+            weather_index (int): weather index
 
-        Returns: (ac_dim,)
-
+        Returns:
+            np.ndarray: action to be executed
         """
-        self.model.eval()
         if len(self.history_states) < self.history_states.maxlen:
             action = self.baseline_agent.predict(state)
         else:
@@ -206,13 +217,23 @@ class ModelBasedHistoryDaggerAgent(ModelBasedDAggerAgent):
                                           action=action)
             self.policy.eval()
             action = self.policy.predict(history_state, history_action, state)
-
+            self.policy.train()
+        
         self.history_states.append(state)
         self.history_actions.append(action)
         return action
 
-    def fit_policy(self, dataset, epoch=10, batch_size=128, verbose=False):
+    def fit_policy(self, epoch=10, batch_size=128, verbose=False):
+        """ Fit the policy
+
+        Args:
+            epoch (int, optional): training epochs for policy. Defaults to 10.
+            batch_size (int, optional): batch size for training policy. Defaults to 128.
+            verbose (bool, optional): [description]. Defaults to False.
+        """
         if len(self.state_action_dataset) > 0:
             self.policy.train()
-            self.policy.fit(self.state_action_dataset, epoch=epoch, batch_size=batch_size,
+            self.policy.fit(dataset=self.state_action_dataset, 
+                            epoch=epoch, 
+                            batch_size=batch_size,
                             verbose=verbose)
