@@ -116,6 +116,9 @@ class ModelBasedCEMRLAgent(ModelBasedAgent):
         self.sampler = IMSampler(self.es)
         self.df = pd.DataFrame(columns=["total_steps", "average_score", "average_score_rl", 
                                         "average_score_ea", "best_score"])
+        self.old_fitness = []
+        self.old_n_steps = []
+        self.old_n_start = []
         self.old_es_params = []
         
     def fit_policy(self, batch_size, n_grad, max_steps, start_steps, n_episodes, n_noisy, n_eval):
@@ -183,11 +186,11 @@ class ModelBasedCEMRLAgent(ModelBasedAgent):
                     prLightPurple('Actor {}, fitness:{}'.format(i, f))
                 else:
                     idx = idx_r[i - n_grad]
-                    fitness[i] = old_fitness[idx]
-                    n_steps[i] = old_n_steps[idx]
-                    n_start[i] = old_n_start[idx]
+                    fitness[i] = self.old_fitness[idx]
+                    n_steps[i] = self.old_n_steps[idx]
+                    n_start[i] = self.old_n_start[idx]
                     self.memory.repeat(int(n_start[i]), int((n_start[i] + n_steps[i]) % self.mem_size))
-                    reused_steps += old_n_steps[idx]
+                    reused_steps += self.old_n_steps[idx]
                     prGreen('Actor {}, fitness:{}'.format(i, fitness[i]))
 
             self.es.tell(es_params, fitness)
@@ -195,9 +198,9 @@ class ModelBasedCEMRLAgent(ModelBasedAgent):
             total_steps += actor_steps
             step_cpt += actor_steps
             
-            old_fitness = deepcopy(fitness)
-            old_n_steps = deepcopy(n_steps)
-            old_n_start = deepcopy(n_start)
+            self.old_fitness = deepcopy(fitness)
+            self.old_n_steps = deepcopy(n_steps)
+            self.old_n_start = deepcopy(n_start)
             self.old_es_params = deepcopy(es_params)
 
             if step_cpt >= self.period:
@@ -253,13 +256,11 @@ class ModelBasedCEMRLAgent(ModelBasedAgent):
 
         scores = []
         steps = 0
-        for _ in range(n_episodes): # TODO: Think about why different episodes are different. 
+        for _ in range(n_episodes): 
             score = 0
             done = False
             step = 0
-            
             self._sample_update()
-            
             history_obses = FloatTensor(self.history_obses)
             history_actions = FloatTensor(self.history_actions)
             current_state = FloatTensor(self.current_state)
@@ -296,7 +297,7 @@ class ModelBasedCEMRLAgent(ModelBasedAgent):
                 else:
                     pd.DataFrame(np.expand_dims(raw_state, axis=0)).to_csv('init_mpc/raw_state.csv', mode='a', header=False, index=False)
                 reward = self.env.ep_model.compute_reward(raw_state=raw_state)
-                score += reward  # TODO: What about adding a discount factor?      
+                score += reward 
                 step += 1
                 if self.evaluate_first_call:
                     weather_pred = FloatTensor(self.outdoor_temp_data[self.weather_idx_ac - self.mpc_horizon + 3 + step:
@@ -350,6 +351,7 @@ class ModelBasedCEMRLAgent(ModelBasedAgent):
             history_actions = self.actions_init_mpc[self.weather_idx_ac:self.weather_idx_ac + self.window_length, :]
             history_states = self.states_init_mpc[self.weather_idx_ac:self.weather_idx_ac + self.window_length, :]
             current_state = self.states_init_mpc[self.weather_idx_ac + self.window_length, :]
+            # NOTE: The indexes of weather_pred should be correct. 
             weather_pred = self.outdoor_temp_data[self.weather_idx_ac + self.window_length + 3:self.weather_idx_ac + 
                                                   self.window_length + 3 + self.mpc_horizon, 1]
             self.weather_idx_ac += 1
@@ -357,12 +359,11 @@ class ModelBasedCEMRLAgent(ModelBasedAgent):
         self.history_obses = np.expand_dims(history_states, axis=0)
         self.history_actions = np.expand_dims(history_actions, axis=0)
         self.current_state = np.expand_dims(current_state, axis=0)
-        weather_pred = np.expand_dims(weather_pred, axis=0)
-        self.weather_pred = weather_pred
+        self.weather_pred = np.expand_dims(weather_pred, axis=0)
 
 
 def _construct_raw_state_from_obs(obs, env, temperature_center):
     state = torch.squeeze(obs[:, :-4])
-    energyplus_obs_wrapper_instance = EnergyPlusObsWrapper(env=env, temperature_center=temperature_center) # TODO
+    energyplus_obs_wrapper_instance = EnergyPlusObsWrapper(env=env, temperature_center=temperature_center)
     raw_state = energyplus_obs_wrapper_instance.reverse_observation(state.detach().cpu().numpy())
     return raw_state

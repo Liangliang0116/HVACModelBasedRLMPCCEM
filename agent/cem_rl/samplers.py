@@ -23,7 +23,6 @@ class BasicSampler:
 
 
 class IMSampler:
-
     """
     Importance mixing sampler optimized for diagonal covariance matrix
     """
@@ -32,21 +31,21 @@ class IMSampler:
         self.optimizer = optimizer
         self.old_mu = None
         self.old_cov = None
-        self.first = True
+        self.first_ask = True
 
     def ask(self, pop_size, old_samples):
-
-        if self.first:
+        
+        if self.first_ask:
             mu, cov = self.optimizer.get_distrib_params()
             self.old_mu = mu
             self.old_cov = cov
-            self.first = False
+            self.first_ask = False
             return self.optimizer.ask(pop_size), 0, []
 
         n_reused = 0
         n_sampled = 0
         mu, cov = self.optimizer.get_distrib_params()
-
+        
         idx_reused = []
         params = np.zeros((pop_size, mu.shape[0]))
 
