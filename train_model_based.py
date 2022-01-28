@@ -11,6 +11,7 @@ from gym_energyplus import make_env, ALL_CITIES
 from outdoor_temp_extract import outdoor_temp_interpolate_and_extract
 from agent.cem_rl.cem_rl import ModelBasedCEMRLAgent
 from logger import logger
+from postprocessing_data import postprocessing_data
 
 
 def train(args, checkpoint_path=None):
@@ -137,7 +138,7 @@ def train(args, checkpoint_path=None):
                              verbose=args['verbose'])
         logger.record_tabular('Time-PolicyFit', time.time() - time_fit_policy_start)
         
-        """ -------------- Obtain samples from the environment ---------------- """
+        """ -------------- Obtain samples from the environment -------------- """
         logger.log("Continuing obtaining samples from the environment...")
         time_env_sampling_start = time.time()
         on_policy_dataset = sampler.sample(policy=agent, 
@@ -145,8 +146,8 @@ def train(args, checkpoint_path=None):
                                            max_rollout_length=max_rollout_length)
         logger.record_tabular('Time-EnvSampling', time.time() - time_env_sampling_start)
             
-        """ ------------------- Other logging -------------------------- """
-        logger.logkv('Iteration Index', num_iter)
+        """ ------------------- Other logging ------------------- """
+        logger.logkv('Iteration Index', num_iter + 1)
         logger.logkv('Time', time.time() - start_time)
         logger.logkv('Iteration Time', time.time() - itr_start_time)
         logger.logkv('Size of Dataset', len(dataset))
@@ -160,6 +161,14 @@ def train(args, checkpoint_path=None):
         dataset.append(on_policy_dataset)
         
     logger.log("Training finished")
+    
+    """ ------------------- Postprocessing data ------------------- """
+    logger.log("Postprocessing data...")
+    postprocessing_data(log_dir=log_dir, 
+                        num_years=args['num_years'],
+                        temperature_center=args['temp_center'],
+                        tolerance=args['temp_tolerance'])
+    logger.log("Done")
 
     if checkpoint_path:
         agent.save_checkpoint(checkpoint_path)
