@@ -31,6 +31,7 @@ class ModelBasedHistoryPlanAgent(ModelBasedPlanAgent):
             action = self.planner.predict(np.array(self.history_states), np.array(self.history_actions), state, weather_index)
         self.history_states.append(state)
         self.history_actions.append(action)
+        self.model.train()
         return action
 
 

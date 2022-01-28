@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import pandas as pd
 import os
+
 from torchlib.common import convert_numpy_to_tensor, FloatTensor
 from torchlib.utils.random.sampler import BaseSampler
 from torchlib.deep_rl.algorithm.model_based import BestRandomActionPlanner
@@ -9,26 +10,44 @@ from torchlib.deep_rl.algorithm.model_based import BestRandomActionPlanner
 
 class BestRandomActionHistoryPlanner(BestRandomActionPlanner):
     """
-    The only difference is that the input state and action contains T time steps
+    The random shooting algorithm
     """
 
-    def __init__(self, model, action_sampler: BaseSampler, cost_fn=None,
-                 horizon=15, num_random_action_selection=4096, gamma=0.95):
-        super(BestRandomActionHistoryPlanner, self).__init__(model, action_sampler, cost_fn, 
+    def __init__(self, 
+                 model, 
+                 action_sampler: BaseSampler, 
+                 cost_fn=None, 
+                 city=None,
+                 horizon=15, 
+                 num_random_action_selection=4096, 
+                 gamma=0.95):
+        """ Initialize this class to get an instance. 
+
+        Args:
+            model: learned dynamics model
+            action_sampler (BaseSampler): sampler to generate actions
+            cost_fn (optional): cost function to determine which action sequence is the best. Defaults to None.
+            city (str, optional): city of which the weather file is used. Defaults to None.
+            horizon (int, optional): mpc prediction horizon. Defaults to 15.
+            num_random_action_selection (int, optional): number of random actions to be selected. Defaults to 4096.
+            gamma (float, optional): discount factor for future cost. Defaults to 0.95.
+        """
+        super(BestRandomActionHistoryPlanner, self).__init__(model, action_sampler, cost_fn,
                                                              horizon, num_random_action_selection, gamma)
-        outdoor_temp_data = pd.read_csv(os.getcwd() + '/outdoor_temp_extract/interpolated_outdoor_temp_Tampa.csv')
+        outdoor_temp_data = pd.read_csv(os.getcwd() + '/outdoor_temp_extract/interpolated_outdoor_temp_{}.csv'.format(city))
         self.outdoor_temp_data = outdoor_temp_data.values
 
     def predict(self, history_state, history_actions, current_state, weather_index):
-        """
+        """ Obtain the best action sequence with random shooting algorithm
 
         Args:
-            history_state: (T - 1, 6)
-            history_actions: (T - 1, 4)
-            current_state: (6,)
+            history_state (np.ndarray): historical state sequence
+            history_actions (np.ndarray): historical action sequence
+            current_state (np.ndarray): current state vector
+            weather_index (int): weather index to determine what weather information to be used
 
-        Returns: best action (4,)
-
+        Returns:
+            np.ndarray: the best action selected by random shooting algorithm
         """
         states = np.expand_dims(history_state, axis=0)
         states = np.tile(states, (self.num_random_action_selection, 1, 1))

@@ -22,7 +22,8 @@
                 "--num_years",
                 "2", 
                 "--algorithm",
-                "cem_rl",
+                // "cem_rl",
+                "random_shooting",
                 "--n_grad",
                 "5",
                 "--max_steps",
@@ -31,7 +32,9 @@
                 "2000",
                 "--n_episode",
                 "960",
-                "--verbose"
+                "--verbose",
+                "--gamma",
+                "1.0"
             ]
         }
     ]

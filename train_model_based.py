@@ -21,9 +21,6 @@ def train(args, checkpoint_path=None):
                            args['num_init_random_rollouts']) // args['num_days_on_policy']
 
     log_dir = args['log_dir'] + '{}/{}'.format('_'.join(args['city']), args['algorithm'])
-    logger.configure(dir=log_dir+'/logger', 
-                     format_strs=['stdout', 'log', 'csv'], 
-                     snapshot_mode='last')
 
     env = make_env(cities=args['city'], 
                    temperature_center=args['temp_center'], 
@@ -32,6 +29,10 @@ def train(args, checkpoint_path=None):
                    action_normalize=True,
                    num_days_per_episode=1, 
                    log_dir=log_dir)
+    
+    logger.configure(dir=log_dir+'/logger', 
+                     format_strs=['stdout', 'log', 'csv'], 
+                     snapshot_mode='last')
     
     outdoor_temp_interpolate_and_extract(city=args['city'],
                                          weather_file=env.weather_files[0],
@@ -84,6 +85,7 @@ def train(args, checkpoint_path=None):
         planner = BestRandomActionHistoryPlanner(model=model, 
                                                  action_sampler=action_sampler, 
                                                  cost_fn=env.cost_fn, 
+                                                 city=env.city,
                                                  horizon=args['mpc_horizon'],
                                                  num_random_action_selection=args['num_random_action_selection'],
                                                  gamma=args['gamma']) # TODO: gamma 
@@ -105,11 +107,7 @@ def train(args, checkpoint_path=None):
     start_time = time.time()
     for num_iter in range(num_on_policy_iters):
         itr_start_time = time.time()
-        logger.log("\n ---------------- Iteration %d ----------------" % num_iter)
-        
-        if args['verbose']:
-            logger.log('On policy iteration {}/{}. Size of dataset: {}. Number of trajectories: {}'.format(
-                       num_iter + 1, num_on_policy_iters, len(dataset), dataset.num_trajectories))
+        logger.log("\n ---------------- Iteration %d/%d ----------------" % (num_iter + 1, num_on_policy_iters))
         agent.set_statistics(dataset)
         
         """ --------------- Fit the dynamics model --------------- """
@@ -132,11 +130,11 @@ def train(args, checkpoint_path=None):
                              n_episodes=args['n_episodes'], 
                              n_noisy=args['n_noisy'], 
                              n_eval=args['n_eval'])
-        else: 
+        elif args['algorithm'] == 'imitation_learning':
             agent.fit_policy(dataset=dataset, 
                              epoch=args['training_epochs'], 
                              batch_size=args['batch_size'], 
-                             verbose=args['verbose'])  # If not dagger, this line does nothing. 
+                             verbose=args['verbose'])
         logger.record_tabular('Time-PolicyFit', time.time() - time_fit_policy_start)
         
         """ -------------- Obtain samples from the environment ---------------- """
@@ -146,17 +144,22 @@ def train(args, checkpoint_path=None):
                                            num_rollouts=args['num_days_on_policy'], 
                                            max_rollout_length=max_rollout_length)
         logger.record_tabular('Time-EnvSampling', time.time() - time_env_sampling_start)
+            
+        """ ------------------- Other logging -------------------------- """
+        logger.logkv('Iteration Index', num_iter)
+        logger.logkv('Time', time.time() - start_time)
+        logger.logkv('Iteration Time', time.time() - itr_start_time)
+        logger.logkv('Size of Dataset', len(dataset))
+        logger.logkv('Number of Trajectories', dataset.num_trajectories)
         
-        # record on policy dataset statistics
-        if args['verbose']:
-            stats = on_policy_dataset.log()
-            strings = []
-            for key, value in stats.items():
-                strings.append(key + ": {:.4f}".format(value))
-            strings = " - ".join(strings)
-            print(strings)
-
+        on_policy_stats = on_policy_dataset.log()
+        for key, value in on_policy_stats.items():
+            logger.logkv(key, value)
+            
+        logger.dumpkvs()
         dataset.append(on_policy_dataset)
+        
+    logger.log("Training finished")
 
     if checkpoint_path:
         agent.save_checkpoint(checkpoint_path)
@@ -217,7 +220,6 @@ def make_parser():
 
 
 if __name__ == '__main__':
-    
     parser = make_parser()
     args = vars(parser.parse_args())
     
