@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 from torchlib.deep_rl import RandomAgent
 from torchlib.utils.random.sampler import UniformSampler
@@ -9,6 +10,7 @@ from agent.sampler import Sampler
 from gym_energyplus import make_env, ALL_CITIES
 from outdoor_temp_extract import outdoor_temp_interpolate_and_extract
 from agent.cem_rl.cem_rl import ModelBasedCEMRLAgent
+from logger import logger
 
 
 def train(args, checkpoint_path=None):
@@ -19,6 +21,9 @@ def train(args, checkpoint_path=None):
                            args['num_init_random_rollouts']) // args['num_days_on_policy']
 
     log_dir = args['log_dir'] + '{}/{}'.format('_'.join(args['city']), args['algorithm'])
+    logger.configure(dir=log_dir+'/logger', 
+                     format_strs=['stdout', 'log', 'csv'], 
+                     snapshot_mode='last')
 
     env = make_env(cities=args['city'], 
                    temperature_center=args['temp_center'], 
@@ -37,7 +42,7 @@ def train(args, checkpoint_path=None):
     dataset = EpisodicHistoryDataset(maxlen=dataset_maxlen, 
                                      window_length=args['window_length'])
 
-    print('Gathering initial dataset...')
+    logger.log("Obtaining random samples from the environment...")
     sampler = Sampler(env=env, 
                       window_length=args['window_length'], 
                       mpc_horizon=args['mpc_horizon'])
@@ -97,16 +102,28 @@ def train(args, checkpoint_path=None):
                                                window_length=args['window_length'], 
                                                baseline_agent=baseline_agent)
 
+    start_time = time.time()
     for num_iter in range(num_on_policy_iters):
+        itr_start_time = time.time()
+        logger.log("\n ---------------- Iteration %d ----------------" % num_iter)
+        
         if args['verbose']:
-            print('On policy iteration {}/{}. Size of dataset: {}. Number of trajectories: {}'.format(
-                  num_iter + 1, num_on_policy_iters, len(dataset), dataset.num_trajectories))
+            logger.log('On policy iteration {}/{}. Size of dataset: {}. Number of trajectories: {}'.format(
+                       num_iter + 1, num_on_policy_iters, len(dataset), dataset.num_trajectories))
         agent.set_statistics(dataset)
+        
+        """ --------------- Fit the dynamics model --------------- """
+        logger.log("Training dynamics model for %i epochs..." % args['training_epochs'])
+        time_fit_model_start = time.time()
         agent.fit_dynamic_model(dataset=dataset, 
                                 epoch=args['training_epochs'], 
                                 batch_size=args['batch_size'], 
                                 verbose=args['verbose'])
+        logger.record_tabular('Time-ModelFit', time.time() - time_fit_model_start)
         
+        """ --------------- Fit the policy --------------- """
+        logger.log("Training policy...")
+        time_fit_policy_start = time.time()
         if args['algorithm'] == 'cem_rl':
             agent.fit_policy(batch_size=args['batch_size'],
                              n_grad=args['n_grad'],
@@ -120,10 +137,16 @@ def train(args, checkpoint_path=None):
                              epoch=args['training_epochs'], 
                              batch_size=args['batch_size'], 
                              verbose=args['verbose'])  # If not dagger, this line does nothing. 
+        logger.record_tabular('Time-PolicyFit', time.time() - time_fit_policy_start)
+        
+        """ -------------- Obtain samples from the environment ---------------- """
+        logger.log("Continuing obtaining samples from the environment...")
+        time_env_sampling_start = time.time()
         on_policy_dataset = sampler.sample(policy=agent, 
                                            num_rollouts=args['num_days_on_policy'], 
                                            max_rollout_length=max_rollout_length)
-
+        logger.record_tabular('Time-EnvSampling', time.time() - time_env_sampling_start)
+        
         # record on policy dataset statistics
         if args['verbose']:
             stats = on_policy_dataset.log()
