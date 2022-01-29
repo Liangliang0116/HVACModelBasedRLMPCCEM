@@ -215,6 +215,7 @@ class ModelBasedHistoryDaggerAgent(ModelBasedDAggerAgent):
                                           history_action=history_action,
                                           state=state,
                                           action=action)
+            # NOTE: Time-EnvSampling will be larger than the actual time due to the dataset adding process. 
             self.policy.eval()
             action = self.policy.predict(history_state, history_action, state)
             self.policy.train()

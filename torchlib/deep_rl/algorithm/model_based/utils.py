@@ -162,9 +162,6 @@ class EpisodicDataset(object):
         self._actions = []
         self._rewards = []
         self.size = 0
-        # initial state
-        self.initial_state = deque(maxlen=maxlen)
-
         self.maxlen = maxlen
 
     def __len__(self):
@@ -242,7 +239,7 @@ class EpisodicDataset(object):
             self._actions.append(np.ravel(action))
         else:
             self._actions.append(action)
-        self._rewards.append(np.ravel(reward))  # The length of the list increases by one.
+        self._rewards.append(np.ravel(reward))
 
         self.size += 1
 
@@ -256,12 +253,12 @@ class EpisodicDataset(object):
             self._rewards = []
 
     def append(self, other_dataset):
-        self.memory.extend(other_dataset.memory)  # The length of the list increases by number of elements in it’s argument.
+        self.memory.extend(other_dataset.memory)
         self.size += other_dataset.size
 
         while self.size > self.maxlen:
             trajectory = self.memory.popleft() 
-            self.size -= len(trajectory.action)  # TODO: I do not understand this. 
+            self.size -= len(trajectory.action)
 
     def get_initial_states(self):
         init_states = []
