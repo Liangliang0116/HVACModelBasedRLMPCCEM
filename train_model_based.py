@@ -115,10 +115,10 @@ def train(args, checkpoint_path=None):
         agent.set_statistics(dataset)
         
         """ --------------- Fit the dynamics model --------------- """
-        logger.log("Training dynamics model for %i epochs..." % args['training_epochs'])
+        logger.log("Training dynamics model for %i epochs..." % args['model_training_epochs'])
         time_fit_model_start = time.time()
         agent.fit_dynamic_model(dataset=dataset, 
-                                epoch=args['training_epochs'], 
+                                epoch=args['model_training_epochs'], 
                                 batch_size=args['batch_size'], 
                                 verbose=args['verbose'])
         logger.record_tabular('Time-ModelFit', time.time() - time_fit_model_start)
@@ -135,7 +135,7 @@ def train(args, checkpoint_path=None):
                              n_noisy=args['n_noisy'], 
                              n_eval=args['n_eval'])
         elif args['algorithm'] == 'imitation_learning':
-            agent.fit_policy(epoch=args['training_epochs'], 
+            agent.fit_policy(epoch=args['policy_training_epochs'], 
                              batch_size=args['batch_size'], 
                              verbose=args['verbose'])
         logger.record_tabular('Time-PolicyFit', time.time() - time_fit_policy_start)
@@ -194,7 +194,8 @@ def make_parser():
     parser.add_argument('--mpc_horizon', type=int, default=5, help='mpc prediction horizon')
     parser.add_argument('--num_days_on_policy', type=int, default=15)
     
-    parser.add_argument('--training_epochs', type=int, default=60, help='training epochs')
+    parser.add_argument('--model_training_epochs', type=int, default=50, help='training epochs for dynamics model')
+    parser.add_argument('--policy_training_epochs', type=int, default=50, help='training epochs for policy')
     parser.add_argument('--batch_size', default=128, type=int, help='training batch size for both dynamics model and policy')
 
     # DDPG parameters
