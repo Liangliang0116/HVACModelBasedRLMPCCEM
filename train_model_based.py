@@ -56,7 +56,7 @@ def train(args, checkpoint_path=None):
     initial_dataset = sampler.sample(policy=baseline_agent, 
                                      num_rollouts=args['num_init_random_rollouts'],
                                      max_rollout_length=np.inf)
-    dataset.append(initial_dataset) # TODO: check the size
+    dataset.append(initial_dataset) 
 
     model = EnergyPlusDynamicsModel(state_dim=env.observation_space.shape[0],
                                     action_dim=env.action_space.shape[0],
@@ -93,7 +93,7 @@ def train(args, checkpoint_path=None):
                                                  city=env.city,
                                                  horizon=args['mpc_horizon'],
                                                  num_random_action_selection=args['num_random_action_selection'],
-                                                 gamma=args['gamma']) # TODO: gamma 
+                                                 gamma=args['gamma'])
         if args['algorithm'] == 'imitation_learning':
             agent = ModelBasedHistoryDaggerAgent(model=model, 
                                                  planner=planner, 

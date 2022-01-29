@@ -34,7 +34,7 @@ class Sampler:
         dataset = EpisodicHistoryDataset(window_length=self.window_length)
 
         for _ in range(num_rollouts):
-            state = self.env.reset()
+            state = self.env.reset() # TODO
             done = False
             t = 0
             while not done:
@@ -44,7 +44,7 @@ class Sampler:
                 if policy.__class__.__name__ == 'RandomAgent': 
                     action = policy.predict(state)
                 elif policy.__class__.__name__ == 'ModelBasedHistoryDaggerAgent':
-                    action = policy.predict(state, self.weather_index)
+                    action = policy.predict(state, self.weather_index) # TODO
                 elif policy.__class__.__name__ == 'ModelBasedHistoryPlanAgent':
                     action = policy.predict(state, self.weather_index)
                 else:
