@@ -34,7 +34,7 @@ class Sampler:
         dataset = EpisodicHistoryDataset(window_length=self.window_length)
 
         for _ in range(num_rollouts):
-            state = self.env.reset() # TODO
+            state = self.env.reset()
             done = False
             t = 0
             while not done:
@@ -53,8 +53,10 @@ class Sampler:
                     weather_pred = self.outdoor_temp_data[self.weather_index: self.weather_index + self.mpc_horizon, 1]
                 
                     # NOTE: Why do we need weather_index here? Because we need weather prediction! 
-                    action = policy.predict(history_states=history_states, history_actions=history_actions, 
-                                            current_state=state, weather_pred=weather_pred)  # TODO: The arguments need to be constructed. 
+                    action = policy.predict(history_states=history_states, 
+                                            history_actions=history_actions, 
+                                            current_state=state, 
+                                            weather_pred=weather_pred)  # TODO: The arguments need to be constructed. 
                 
                 self.history_states.append(state)
                 self.history_actions.append(action)

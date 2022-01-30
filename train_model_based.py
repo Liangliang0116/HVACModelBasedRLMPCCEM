@@ -24,7 +24,7 @@ def train(args, checkpoint_path=None):
     if args['new_log_dir']:
         log_dir = args['log_dir'] + '{}/{}/{}'.format('_'.join(args['city']), args['algorithm'], time.strftime("%Y%m%d-%H%M%S"))
     else:
-        log_dir = args['log_dir'] + '{}/{}'.format('_'.join(args['city']), args['algorithm'])
+        log_dir = args['log_dir'] + '_{}/{}'.format('_'.join(args['city']), args['algorithm'])
 
     env = make_env(cities=args['city'], 
                    temperature_center=args['temp_center'], 
@@ -82,8 +82,7 @@ def train(args, checkpoint_path=None):
                                      elitism=args['elitism'],
                                      period=args['period'], 
                                      log_dir=log_dir, 
-                                     save_all_models=args['save_all_models']
-                                     )
+                                     save_all_models=args['save_all_models'])
 
     else:
         action_sampler = UniformSampler(low=env.action_space.low, high=env.action_space.high)
@@ -181,7 +180,7 @@ def make_parser():
     parser = ArgumentParser()
     parser.add_argument('--city', type=str, choices=ALL_CITIES, nargs='+', help='city of which the weather file is used')
     parser.add_argument('--algorithm', type=str, default='cem_rl', 
-                        choices=['cem_rl', 'random_shooting', 'imitation_learning'], help='the algorithm to be trained')
+                        choices=['cem_rl', 'random_shooting', 'imitation_learning'], help='algorithm to be trained')
     parser.add_argument('--temp_center', type=float, default=23.5, help='temperature center that is perferred')
     parser.add_argument('--temp_tolerance', type=float, default=1.5, help='temperature deviation from center to avoid uncomfortableness')
     parser.add_argument('--window_length', type=int, default=20, help='window length of historical data')
@@ -217,7 +216,7 @@ def make_parser():
     parser.add_argument('--start_steps', default=10000, type=int, 
                         help='step index after which the actors and critics will be updated when training the cem_rl policy')
     parser.add_argument('--max_steps', default=1000000, type=int, help='maximum number of iteration steps when training the cem_rl policy')
-    parser.add_argument('--mem_size', default=20000, type=int)
+    parser.add_argument('--mem_size', default=100000, type=int)
     parser.add_argument('--n_noisy', default=0, type=int, help='number of noisy actors')
     parser.add_argument('--n_eval', default=10, type=int, 
                         help='number of evaluation episodes in when evaluating the actors after training when training the cem_rl policy')

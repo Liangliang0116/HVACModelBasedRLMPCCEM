@@ -72,5 +72,5 @@ def postprocessing_data(log_dir,
     
     
 if __name__ == '__main__':
-    postprocessing_data(log_dir='results/SF/random_shooting')
+    postprocessing_data(log_dir='results/SF/cem_rl')
     
