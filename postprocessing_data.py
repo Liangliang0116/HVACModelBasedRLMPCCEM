@@ -23,6 +23,7 @@ def postprocessing_data(log_dir,
     """
     
     csv_file = log_dir + '/episode-{}.csv'.format(num_years-1)
+    csv_file_processed = log_dir + '/episode-{}_processed.csv'.format(num_years-1)
 
     df = pd.read_csv(csv_file)
     data = df.to_numpy()
@@ -61,6 +62,8 @@ def postprocessing_data(log_dir,
     reward_trapezoid = np.asarray(reward_trapezoid)
     reward_energy = np.asarray((reward_energy))
     reward_total = reward_center_temp + reward_trapezoid + reward_energy
+    temp_dev_square_zone1 = np.asarray(temp_dev_square_zone1)
+    temp_dev_square_zone2 = np.asarray(temp_dev_square_zone2)
 
     df['reward_center_temp'] = reward_center_temp
     df['reward_trapezoid'] = reward_trapezoid
@@ -68,9 +71,19 @@ def postprocessing_data(log_dir,
     df['reward_total'] = reward_total
     df['temp_dev_square_zone1'] = temp_dev_square_zone1
     df['temp_dev_square_zone2'] = temp_dev_square_zone2
-    df.to_csv(csv_file, index=False)
+    df.to_csv(csv_file_processed, index=False)
     
     
 if __name__ == '__main__':
+    """
+    I do not know why implementing the function postprocessing_data from train_model_based.py 
+    cannot generate correct results in my computer. This is quite strange. 
+    
+    If this issue happens, you need to run this file independently with manually typed log_dir. 
+    
+    In addition, one direct method to check if the issue above happens is to check if the 
+    number of rows in the generated csv file is the same as that in the original csv file. 
+    
+    """
     postprocessing_data(log_dir='results/SF/cem_rl')
     

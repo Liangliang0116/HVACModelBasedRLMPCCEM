@@ -39,3 +39,49 @@
         }
     ]
 }
+
+// {
+//     // Use IntelliSense to learn about possible attributes.
+//     // Hover to view descriptions of existing attributes.
+//     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+//     "version": "0.2.0",
+//     "configurations": [
+//         {
+//             "name": "Python: Current File",
+//             "type": "python",
+//             "request": "launch",
+//             "program": "train_model_based.py",
+//             "console": "integratedTerminal",
+//             "args": [
+//                 "--city",
+//                 "SF",
+//                 "--mpc_horizon",
+//                 "1",
+//                 "--num_days_on_policy",
+//                 "10",
+//                 "--num_years",
+//                 "2", 
+//                 "--algorithm",
+//                 "cem_rl",
+//                 // "random_shooting",
+//                 // "imitation_learning",
+//                 "--n_grad",
+//                 "1",
+//                 "--max_steps",
+//                 "200",
+//                 "--start_steps",
+//                 "200",
+//                 "--n_episode",
+//                 "8",
+//                 "--verbose",
+//                 "--gamma",
+//                 "1.0",
+//                 // "--new_log_dir"
+//                 "--model_training_epochs",
+//                 "5",
+//                 "--policy_training_epochs",
+//                 "5"
+//             ]
+//         }
+//     ]
+// }
