@@ -24,7 +24,7 @@ def train(args, checkpoint_path=None):
     if args['new_log_dir']:
         log_dir = args['log_dir'] + '{}/{}/{}'.format('_'.join(args['city']), args['algorithm'], time.strftime("%Y%m%d-%H%M%S"))
     else:
-        log_dir = args['log_dir'] + '{}/{}'.format('_'.join(args['city']), args['algorithm'])
+        log_dir = args['log_dir'] + '_{}/{}'.format('_'.join(args['city']), args['algorithm'])
 
     env = make_env(cities=args['city'], 
                    temperature_center=args['temp_center'], 
