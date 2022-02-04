@@ -10,11 +10,10 @@ import gym.spaces
 import numpy as np
 import torch.optim
 
-from torchlib import deep_rl
 from agent.model import EnergyPlusPPOContinuousPolicy
 from torchlib.utils.random import set_global_seeds
-
 from gym_energyplus import make_env, ALL_CITIES
+from torchlib.deep_rl.algorithm.policy_gradient.ppo import PPOAgent
 
 
 def make_parser():
@@ -29,7 +28,7 @@ def make_parser():
     parser.add_argument('--n_iter', '-n', type=int, default=100)
     parser.add_argument('--batch_size', '-b', type=int, default=96 * 73)
     parser.add_argument('--learning_rate', '-lr', type=float, default=5e-3)
-    parser.add_argument('--nn_size', '-s', type=int, default=64)
+    parser.add_argument('--hidden_size', '-s', type=int, default=64)
     parser.add_argument('--seed', type=int, default=1)
     parser.add_argument('--city', type=str, choices=ALL_CITIES, nargs='+')
     parser.add_argument('--temp_center', type=float, default=23.5)
@@ -76,19 +75,31 @@ if __name__ == '__main__':
     if discrete:
         policy_net = None
     else:
-        policy_net = EnergyPlusPPOContinuousPolicy(state_dim=ob_dim, action_dim=ac_dim, hidden_size=args['nn_size'])
+        policy_net = EnergyPlusPPOContinuousPolicy(state_dim=ob_dim, action_dim=ac_dim, hidden_size=args['hidden_size'])
 
     policy_optimizer = torch.optim.Adam(policy_net.parameters(), args['learning_rate'])
 
-    agent = deep_rl.algorithm.policy_gradient.ppo.PPOAgent(policy_net, 
-                                                           policy_optimizer,
-                                                           init_hidden_unit=None,
-                                                           lam=args['gae_lambda'],
-                                                           clip_param=args['clip_param'],
-                                                           entropy_coef=args['entropy_coef'], 
-                                                           value_coef=args['value_coef'])
+    agent = PPOAgent(policy_net=policy_net, 
+                     policy_optimizer=policy_optimizer, 
+                     init_hidden_unit=None,
+                     lam=args['gae_lambda'],
+                     clip_param=args['clip_param'],
+                     entropy_coef=args['entropy_coef'], 
+                     value_coef=args['value_coef'])
 
     checkpoint_path = 'checkpoint/{}_ppo.ckpt'.format(city)
 
-    agent.train(args['exp_name'], env, args['n_iter'], args['discount'], args['batch_size'], np.inf,
-                logdir=None, seed=args['seed'], checkpoint_path=None)
+    agent.train(exp=args['exp_name'], 
+                env=env, 
+                n_iter=args['n_iter'], 
+                gamma=args['discount'], 
+                min_timesteps_per_batch=args['batch_size'], 
+                max_path_length=np.inf,
+                logdir=None, 
+                seed=args['seed'], 
+                checkpoint_path=None)
+    
+    postprocessing_data(log_dir=log_dir, 
+                        num_years=20,
+                        temperature_center=args['temp_center'],
+                        tolerance=args['temp_tolerance'])

@@ -186,3 +186,21 @@ class EnergyPlusPPOContinuousPolicy(BasePolicy):
 
     def _calculate_feature_output_size(self):
         return self.hidden_size
+    
+    
+class EnergyPlusTD3ContinuousPolicy(BasePolicy):
+    def __init__(self, state_dim, action_dim, hidden_size):
+        self.state_dim = state_dim
+        self.action_dim = action_dim
+        self.hidden_size = hidden_size
+        super(EnergyPlusTD3ContinuousPolicy, self).__init__(recurrent=False, hidden_size=None)
+
+    def _create_feature_extractor(self):
+        return LSTMOutput(self.state_dim, self.action_dim, self.hidden_size)
+
+    def _create_action_head(self, feature_output_size):
+        action_header = _BetaActionHead(feature_output_size, self.action_dim)
+        return action_header
+
+    def _calculate_feature_output_size(self):
+        return self.hidden_size
