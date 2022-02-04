@@ -127,6 +127,8 @@ class RescaledBeta(TransformedDistribution):
 
     def __init__(self, concentration1, concentration0, validate_args=None):
         base_distribution = Beta(concentration1, concentration0, validate_args=validate_args)
+        self.concentration0 = concentration0
+        self.concentration1 = concentration1
         super(RescaledBeta, self).__init__(base_distribution=base_distribution,
                                            transforms=AffineTransform(loc=-1., scale=2.))
 
@@ -150,6 +152,8 @@ class IndependentRescaledBeta(Distribution):
     def __init__(self, concentration1, concentration0, validate_args=None):
         self.base_dist = Independent(RescaledBeta(concentration1, concentration0, validate_args),
                                      len(concentration1.shape) - 1, validate_args=validate_args)
+        self.concentration0 = concentration0
+        self.concentration1 = concentration1
         super(IndependentRescaledBeta, self).__init__(self.base_dist.batch_shape, self.base_dist.event_shape,
                                                       validate_args=validate_args)
 
