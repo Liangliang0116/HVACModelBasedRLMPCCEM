@@ -1,3 +1,3 @@
 from .agent import ModelBasedHistoryPlanAgent, ModelBasedHistoryDaggerAgent
 from .model import EnergyPlusDynamicsModel
-from .planner import BestRandomActionHistoryPlanner
+from .planner import BestRandomActionHistoryPlanner, BestRandomActionHistoryAdaptivePlanner

@@ -84,3 +84,93 @@ class BestRandomActionHistoryPlanner(BestRandomActionPlanner):
         self.model.train()    
         
         return best_action
+    
+    
+class BestRandomActionHistoryAdaptivePlanner(BestRandomActionPlanner):
+    """
+    The random shooting algorithm
+    """
+
+    def __init__(self, 
+                 model, 
+                 action_space,
+                 action_sampler: BaseSampler, 
+                 cost_fn=None, 
+                 city=None,
+                 horizon=15, 
+                 num_random_action_selection=4096, 
+                 ratio_elite=0.5,
+                 gamma=0.95):
+        """ Initialize this class to get an instance. 
+
+        Args:
+            model: learned dynamics model
+            action_sampler (BaseSampler): sampler to generate actions
+            cost_fn (optional): cost function to determine which action sequence is the best. Defaults to None.
+            city (str, optional): city of which the weather file is used. Defaults to None.
+            horizon (int, optional): mpc prediction horizon. Defaults to 15.
+            num_random_action_selection (int, optional): number of random actions to be selected. Defaults to 4096.
+            gamma (float, optional): discount factor for future cost. Defaults to 0.95.
+        """
+        super(BestRandomActionHistoryAdaptivePlanner, self).__init__(model, action_sampler, cost_fn, 
+                                                                     horizon, num_random_action_selection, gamma)
+        outdoor_temp_data = pd.read_csv(os.getcwd() + '/outdoor_temp_extract/interpolated_outdoor_temp_{}.csv'.format(city))
+        self.outdoor_temp_data = outdoor_temp_data.values
+        self.max_actions = action_space.high
+        self.min_actions = action_space.low
+        self.num_elites = int(num_random_action_selection * ratio_elite)
+
+    def predict(self, history_state, history_actions, current_state, weather_index):
+        """ Obtain the best action sequence with random shooting algorithm
+
+        Args:
+            history_state (np.ndarray): historical state sequence
+            history_actions (np.ndarray): historical action sequence
+            current_state (np.ndarray): current state vector
+            weather_index (int): weather index to determine what weather information to be used
+
+        Returns:
+            np.ndarray: the best action selected by random shooting algorithm
+        """
+        states = np.expand_dims(history_state, axis=0)
+        states = np.tile(states, (self.num_random_action_selection, 1, 1))
+        states = convert_numpy_to_tensor(states)
+
+        next_states = np.expand_dims(current_state, axis=0)
+        next_states = np.tile(next_states, (self.num_random_action_selection, 1))
+        next_states = convert_numpy_to_tensor(next_states)
+
+        actions = self.action_sampler.sample((self.horizon, self.num_random_action_selection))
+        actions = np.clip(actions, self.min_actions, self.max_actions)
+        actions = convert_numpy_to_tensor(actions).type(FloatTensor)
+
+        history_actions = np.expand_dims(history_actions, axis=0)
+        current_action = np.tile(history_actions, (self.num_random_action_selection, 1, 1))
+        current_action = convert_numpy_to_tensor(current_action)
+
+        self.model.eval()
+        with torch.no_grad():
+            cost = torch.zeros(size=(self.num_random_action_selection,)).type(FloatTensor)
+            for i in range(self.horizon):
+                states = torch.cat((states, torch.unsqueeze(next_states, dim=1)), dim=1)
+                current_action = torch.cat((current_action, torch.unsqueeze(actions[i], dim=1)), dim=1)
+                next_states = self.model.predict_next_states(states, current_action)
+                next_states_numpy = next_states.cpu().detach().numpy()
+                next_states_numpy = np.insert(next_states_numpy, obj=0, values=self.outdoor_temp_data[weather_index + i, 1], axis=1)
+                next_states = convert_numpy_to_tensor(next_states_numpy)
+                cost += self.cost_fn(states[:, -1, :], actions[i], next_states) * self.gamma_inverse
+                current_action = current_action[:, 1:, :]
+                states = states[:, 1:, :]
+
+            idxes_elites = torch.topk(input=-cost, k=self.num_elites, dim=0)[1].tolist()
+            elites = actions[0, idxes_elites]
+            elites = elites.cpu().numpy()
+            elites_mean = np.mean(elites, axis=0)
+            elites_std = np.std(elites, axis=0)
+            
+            self.action_sampler.mu = elites_mean # TODO: soft update may be better
+            self.action_sampler.sigma = elites_std
+        
+        self.model.train()    
+        
+        return elites_mean

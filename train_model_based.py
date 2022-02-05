@@ -2,9 +2,9 @@ import numpy as np
 import time
 
 from torchlib.deep_rl import RandomAgent
-from torchlib.utils.random.sampler import UniformSampler
+from torchlib.utils.random.sampler import UniformSampler, MultivariateGaussianSampler
 from agent import ModelBasedHistoryPlanAgent, ModelBasedHistoryDaggerAgent, EnergyPlusDynamicsModel, \
-    BestRandomActionHistoryPlanner
+    BestRandomActionHistoryPlanner,BestRandomActionHistoryAdaptivePlanner
 from agent.utils import EpisodicHistoryDataset
 from agent.sampler import Sampler
 from gym_energyplus import make_env, ALL_CITIES
@@ -22,9 +22,15 @@ def train(args, checkpoint_path=None):
                            args['num_init_random_rollouts']) // args['num_days_on_policy']
 
     if args['new_log_dir']:
-        log_dir = args['log_dir'] + '{}/{}/{}'.format('_'.join(args['city']), args['algorithm'], time.strftime("%Y%m%d-%H%M%S"))
+        if args['adaptive_sampling']:
+            log_dir = args['log_dir'] + '{}/{}_adaptive/{}'.format('_'.join(args['city']), args['algorithm'], time.strftime("%Y%m%d-%H%M%S"))
+        else:
+            log_dir = args['log_dir'] + '{}/{}/{}'.format('_'.join(args['city']), args['algorithm'], time.strftime("%Y%m%d-%H%M%S"))
     else:
-        log_dir = args['log_dir'] + '_{}/{}'.format('_'.join(args['city']), args['algorithm'])
+        if args['adaptive_sampling']:
+            log_dir = args['log_dir'] + '{}/{}_adaptive'.format('_'.join(args['city']), args['algorithm'])
+        else:
+            log_dir = args['log_dir'] + '{}/{}'.format('_'.join(args['city']), args['algorithm'])
 
     env = make_env(cities=args['city'], 
                    temperature_center=args['temp_center'], 
@@ -85,14 +91,28 @@ def train(args, checkpoint_path=None):
                                      save_all_models=args['save_all_models'])
 
     else:
-        action_sampler = UniformSampler(low=env.action_space.low, high=env.action_space.high)
-        planner = BestRandomActionHistoryPlanner(model=model, 
-                                                 action_sampler=action_sampler, 
-                                                 cost_fn=env.cost_fn, 
-                                                 city=env.city,
-                                                 horizon=args['mpc_horizon'],
-                                                 num_random_action_selection=args['num_random_action_selection'],
-                                                 gamma=args['gamma'])
+        if args['adaptive_sampling']:
+            action_sampler = MultivariateGaussianSampler(mu=np.zeros(env.action_space.shape[0]), 
+                                                         sigma=np.ones(env.action_space.shape[0]))
+            planner = BestRandomActionHistoryAdaptivePlanner(model=model, 
+                                                             action_space=env.action_space,
+                                                             action_sampler=action_sampler, 
+                                                             cost_fn=env.cost_fn, 
+                                                             city=env.city,
+                                                             horizon=args['mpc_horizon'],
+                                                             num_random_action_selection=args['num_random_action_selection'],
+                                                             gamma=args['gamma'])
+        else:
+            action_sampler = UniformSampler(low=env.action_space.low, high=env.action_space.high)
+            planner = BestRandomActionHistoryPlanner(model=model, 
+                                                     action_sampler=action_sampler, 
+                                                     cost_fn=env.cost_fn, 
+                                                     city=env.city,
+                                                     horizon=args['mpc_horizon'],
+                                                     num_random_action_selection=args['num_random_action_selection'],
+                                                     ratio_elite=0.5,
+                                                     gamma=args['gamma'])
+
         if args['algorithm'] == 'imitation_learning':
             agent = ModelBasedHistoryDaggerAgent(model=model, 
                                                  planner=planner, 
@@ -181,6 +201,7 @@ def make_parser():
     parser.add_argument('--city', type=str, choices=ALL_CITIES, nargs='+', help='city of which the weather file is used')
     parser.add_argument('--algorithm', type=str, default='cem_rl', 
                         choices=['cem_rl', 'random_shooting', 'imitation_learning'], help='algorithm to be trained')
+    parser.add_argument('--adaptive_sampling', dest="adaptive_sampling", action="store_true")
     parser.add_argument('--temp_center', type=float, default=23.5, help='temperature center that is perferred')
     parser.add_argument('--temp_tolerance', type=float, default=1.5, help='temperature deviation from center to avoid uncomfortableness')
     parser.add_argument('--window_length', type=int, default=20, help='window length of historical data')

@@ -52,6 +52,18 @@ class GaussianSampler(BaseSampler):
         return np.random.normal(self.mu, self.sigma, shape)
 
 
+class MultivariateGaussianSampler(BaseSampler):
+    def __init__(self, mu=0.0, sigma=1.0):
+        super(MultivariateGaussianSampler, self).__init__()
+        self.mu = mu
+        self.sigma = sigma
+
+    def sample(self, shape, *args):
+        return np.random.multivariate_normal(mean=self.mu, 
+                                             cov=np.diag(self.sigma), 
+                                             size=shape)
+
+
 class GaussianMixtureSampler(BaseSampler):
     """ Sample from GMM with prior probability distribution """
 
