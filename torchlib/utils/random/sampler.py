@@ -57,6 +57,12 @@ class MultivariateGaussianSampler(BaseSampler):
         super(MultivariateGaussianSampler, self).__init__()
         self.mu = mu
         self.sigma = sigma
+        self.init_mu = mu
+        self.init_sigma = sigma
+    
+    def reset_params(self):
+        self.mu = self.init_mu
+        self.sigma = self.init_sigma
 
     def sample(self, shape, *args):
         return np.random.multivariate_normal(mean=self.mu, 
