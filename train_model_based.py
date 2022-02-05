@@ -101,7 +101,9 @@ def train(args, checkpoint_path=None):
                                                              city=env.city,
                                                              horizon=args['mpc_horizon'],
                                                              num_random_action_selection=args['num_random_action_selection'],
-                                                             gamma=args['gamma'])
+                                                             gamma=args['gamma'],
+                                                             damp=args['damp'], 
+                                                             damp_limit=args['damp_limit'])
         else:
             action_sampler = UniformSampler(low=env.action_space.low, high=env.action_space.high)
             planner = BestRandomActionHistoryPlanner(model=model, 

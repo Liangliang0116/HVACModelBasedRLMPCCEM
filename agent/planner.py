@@ -100,7 +100,9 @@ class BestRandomActionHistoryAdaptivePlanner(BestRandomActionPlanner):
                  horizon=15, 
                  num_random_action_selection=4096, 
                  ratio_elite=0.5,
-                 gamma=0.95):
+                 gamma=0.95,
+                 damp=1e-3,
+                 damp_limit=1e-5):
         """ Initialize this class to get an instance. 
 
         Args:
@@ -118,7 +120,17 @@ class BestRandomActionHistoryAdaptivePlanner(BestRandomActionPlanner):
         self.outdoor_temp_data = outdoor_temp_data.values
         self.max_actions = action_space.high
         self.min_actions = action_space.low
+        self.action_dim = action_space.shape[0]
+        
+        self.damp = damp
+        self.damp_limit = damp_limit
+        self.tau = 0.95
+        
         self.num_elites = int(num_random_action_selection * ratio_elite)
+        self.weights = np.array([np.log((self.num_elites + 1) / i)
+                                 for i in range(1, self.num_elites + 1)])
+        self.weights /= self.weights.sum()
+        self.weights = np.float32(self.weights)
 
     def predict(self, history_state, history_actions, current_state, weather_index):
         """ Obtain the best action sequence with random shooting algorithm
@@ -161,6 +173,18 @@ class BestRandomActionHistoryAdaptivePlanner(BestRandomActionPlanner):
                 cost += self.cost_fn(states[:, -1, :], actions[i], next_states) * self.gamma_inverse
                 current_action = current_action[:, 1:, :]
                 states = states[:, 1:, :]
+                
+            # cost = cost.cpu().numpy()
+            # idx_sorted = np.argsort(cost)
+            # elites = actions[0, idx_sorted[:self.num_elites]]
+            # elites = elites.cpu().numpy()
+
+            # old_mu = self.action_sampler.mu
+            # self.damp = self.damp * self.tau + (1 - self.tau) * self.damp_limit
+            # self.action_sampler.mu = self.weights @ elites
+
+            # z = np.float32(elites - old_mu)
+            # self.action_sampler.sigma = self.weights @ (z * z) + self.damp * np.ones(self.action_dim)
 
             idxes_elites = torch.topk(input=-cost, k=self.num_elites, dim=0)[1].tolist()
             elites = actions[0, idxes_elites]
@@ -168,9 +192,10 @@ class BestRandomActionHistoryAdaptivePlanner(BestRandomActionPlanner):
             elites_mean = np.mean(elites, axis=0)
             elites_std = np.std(elites, axis=0)
             
-            self.action_sampler.mu = elites_mean # TODO: soft update may be better
-            self.action_sampler.sigma = elites_std
+            self.damp = self.damp * self.tau + (1 - self.tau) * self.damp_limit
+            self.action_sampler.mu = elites_mean
+            self.action_sampler.sigma = elites_std + self.damp * np.ones(self.action_dim)
         
         self.model.train()    
         
-        return elites_mean
+        return self.action_sampler.mu
