@@ -133,8 +133,7 @@ class SepCEM:
         self.mu = self.weights @ solutions[idx_sorted[:self.parents]]
 
         z = solutions[idx_sorted[:self.parents]] - old_mu
-        self.cov = 1 / self.parents * self.weights @ (z * z) + self.damp * np.ones(self.num_params) 
-        # TODO: Why do we need 1 / self.parents
+        self.cov = self.weights @ (z * z) + self.damp * np.ones(self.num_params) 
 
         self.elite = solutions[idx_sorted[0]]
         self.elite_score = scores[idx_sorted[0]]

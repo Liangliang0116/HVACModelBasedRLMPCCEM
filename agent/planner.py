@@ -99,7 +99,7 @@ class BestRandomActionHistoryAdaptivePlanner(BestRandomActionPlanner):
                  city=None,
                  horizon=15, 
                  num_random_action_selection=4096, 
-                 ratio_elite=0.1,
+                 ratio_elite=0.2,
                  gamma=0.95,
                  damp=1e-3,
                  damp_limit=1e-5):
@@ -210,7 +210,7 @@ class BestRandomActionHistoryAdaptivePlanner(BestRandomActionPlanner):
         self.action_sampler.reset_params()
         self.reset_damp()
             
-        self.model.train()  
-        best_action = actions[0, idxes_elites[0]].cpu().numpy()
+        self.model.train()
         
-        return best_action
+        return elites_mean
+    

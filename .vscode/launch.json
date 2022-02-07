@@ -12,8 +12,9 @@
             "console": "integratedTerminal",
             "args": [
                 "--city",
-                "SF",
-                // "Golden",
+                // "SF",
+                "Golden",
+                // "Tampa",
                 "--mpc_horizon",
                 "5",
                 "--num_days_on_policy",
