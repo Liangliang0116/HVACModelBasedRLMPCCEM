@@ -99,7 +99,7 @@ class BestRandomActionHistoryAdaptivePlanner(BestRandomActionPlanner):
                  city=None,
                  horizon=15, 
                  num_random_action_selection=4096, 
-                 ratio_elite=0.2,
+                 ratio_elite=0.1,
                  gamma=0.95,
                  damp=1e-3,
                  damp_limit=1e-5):
