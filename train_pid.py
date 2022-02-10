@@ -80,7 +80,7 @@ if __name__ == '__main__':
     true_done = False
     day_index = 1
 
-    agent = PIDAgent(target=temperature_center-3.5, sensitivity=sensitivity, alpha=alpha)
+    agent = PIDAgent(target=temperature_center-4.0, sensitivity=sensitivity, alpha=alpha)
 
     while not true_done:
         obs = env.reset()
