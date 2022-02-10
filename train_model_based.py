@@ -4,7 +4,7 @@ import time
 from torchlib.deep_rl import RandomAgent
 from torchlib.utils.random.sampler import UniformSampler, MultivariateGaussianSampler
 from agent import ModelBasedHistoryPlanAgent, ModelBasedHistoryDaggerAgent, EnergyPlusDynamicsModel, \
-    BestRandomActionHistoryPlanner,BestRandomActionHistoryAdaptivePlanner
+    BestRandomActionHistoryPlanner, BestRandomActionHistoryAdaptivePlanner
 from agent.utils import EpisodicHistoryDataset
 from agent.sampler import Sampler
 from gym_energyplus import make_env, ALL_CITIES

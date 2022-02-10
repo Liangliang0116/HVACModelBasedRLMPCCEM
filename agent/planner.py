@@ -16,10 +16,12 @@ class BestRandomActionHistoryPlanner(BestRandomActionPlanner):
     def __init__(self, 
                  model, 
                  action_sampler: BaseSampler, 
+                 action_space = None,
                  cost_fn=None, 
                  city=None,
                  horizon=15, 
                  num_random_action_selection=4096, 
+                 ratio_elite=None,
                  gamma=0.95):
         """ Initialize this class to get an instance. 
 
