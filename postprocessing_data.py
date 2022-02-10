@@ -85,6 +85,6 @@ if __name__ == '__main__':
     number of rows in the generated csv file is the same as that in the original csv file. 
     
     """
-    postprocessing_data(log_dir='results/SF/random_shooting_adaptive',
-                        num_years=2)
+    postprocessing_data(log_dir='results/SF/pid',
+                        num_years=1)
     

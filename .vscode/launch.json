@@ -1,3 +1,50 @@
+// {
+//     // Use IntelliSense to learn about possible attributes.
+//     // Hover to view descriptions of existing attributes.
+//     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+//     "version": "0.2.0",
+//     "configurations": [
+//         {
+//             "name": "Python: Current File",
+//             "type": "python",
+//             "request": "launch",
+//             "program": "train_model_based.py",
+//             "console": "integratedTerminal",
+//             "args": [
+//                 "--city",
+//                 "SF",
+//                 // "Golden",
+//                 // "Sterling",
+//                 // "Chicago",
+//                 // "Tampa",
+//                 "--mpc_horizon",
+//                 "5",
+//                 "--num_days_on_policy",
+//                 "10",
+//                 "--num_years",
+//                 "2", 
+//                 "--algorithm",
+//                 // "cem_rl",
+//                 // "random_shooting",
+//                 "imitation_learning",
+//                 "--n_grad",
+//                 "5",
+//                 "--max_steps",
+//                 "19200",
+//                 "--start_steps",
+//                 "2000",
+//                 "--n_episode",
+//                 "960",
+//                 "--verbose",
+//                 "--gamma",
+//                 "1.0",
+//                 // "--adaptive_sampling",
+//                 // "--new_log_dir"
+//             ]
+//         }
+//     ]
+// }
+
 {
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
@@ -8,36 +55,15 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "train_model_based.py",
+            "program": "train_pid.py",
             "console": "integratedTerminal",
             "args": [
                 "--city",
-                "SF",
+                // "SF",
                 // "Golden",
                 // "Tampa",
-                "--mpc_horizon",
-                "5",
-                "--num_days_on_policy",
-                "10",
-                "--num_years",
-                "2", 
-                "--algorithm",
-                // "cem_rl",
-                // "random_shooting",
-                "imitation_learning",
-                "--n_grad",
-                "5",
-                "--max_steps",
-                "19200",
-                "--start_steps",
-                "2000",
-                "--n_episode",
-                "960",
-                "--verbose",
-                "--gamma",
-                "1.0",
-                "--adaptive_sampling",
-                // "--new_log_dir"
+                // "Chicago",
+                "Sterling"
             ]
         }
     ]
@@ -53,31 +79,15 @@
 //             "name": "Python: Current File",
 //             "type": "python",
 //             "request": "launch",
-//             "program": "train_pid.py",
-//             "console": "integratedTerminal",
-//             "args": [
-//                 "--city",
-//                 "SF"
-//             ]
-//         }
-//     ]
-// }
-
-// {
-//     // Use IntelliSense to learn about possible attributes.
-//     // Hover to view descriptions of existing attributes.
-//     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-//     "version": "0.2.0",
-//     "configurations": [
-//         {
-//             "name": "Python: Current File",
-//             "type": "python",
-//             "request": "launch",
 //             "program": "train_ppo.py",
 //             "console": "integratedTerminal",
 //             "args": [
 //                 "--city",
-//                 "SF"
+//                 // "SF",
+//                 // "Golden",
+//                 // "Tampa",
+//                 // "Chicago",
+//                 "Sterling"
 //             ]
 //         }
 //     ]

@@ -1,13 +1,13 @@
 import pandas as pd
 import numpy as np
 import matplotlib
-matplotlib.rcParams['text.usetex'] = True
+# matplotlib.rcParams['text.usetex'] = True
 import matplotlib.pyplot as plt
-# plt.rcParams.update({'font.size': 12})
+plt.rcParams.update({'font.size': 12})
 
 matplotlib.rcParams['mathtext.fontset'] = 'stix'
 matplotlib.rcParams['font.family'] = 'STIXGeneral'
-matplotlib.rcParams.update({'font.size': 14})
+# matplotlib.rcParams.update({'font.size': 14})
 
 plt.figure(figsize=(8, 12), dpi=80)
 
@@ -60,7 +60,7 @@ for count, city in enumerate(cities):
     else:
         ax["ax{0}".format(count + 1)] = plt.subplot(pos_fig, sharex=ax["ax1"])
     
-    csv_file = '../runs/new_mem_size/' + city + '_23.5_1.5_20_5_8192_10_50_False_model_based_cemrl_real_time_mem_size_100000_protected/episode-1.csv'
+    csv_file = 'results/' + city + '/cem_rl/episode-1.csv'
     df = pd.read_csv(csv_file)
     
     indoor_temp_west['%s' % city] = df['west_temperature'][17376:20352]
@@ -87,7 +87,7 @@ plt.xticks([17376, 17856, 18336, 18816, 19296, 19776, 20256],
 ax["ax5"].set_xlabel('Date')
 ax["ax3"].set_ylabel('Indoor Air Temperature ($^{\circ}$C)')
 plt.tight_layout()
-plt.savefig('Fig2_.pdf', format='pdf')
+plt.savefig('figures/Fig2.pdf', format='pdf')
 plt.show()
 
 
@@ -114,7 +114,7 @@ for count, city in enumerate(cities):
         ax["ax{0}".format(count + 1)] = plt.subplot(pos_fig, sharex=ax["ax1"])
         ax_twin["ax{0}".format(count + 1)] = ax["ax{0}".format(count + 1)].twinx()
     
-    csv_file = '../runs/new_mem_size/' + city + '_23.5_1.5_20_5_8192_10_50_False_model_based_cemrl_real_time_mem_size_100000_protected/episode-1.csv'
+    csv_file = 'results/' + city + '/cem_rl/episode-1.csv'
     df = pd.read_csv(csv_file)
     
     ite_power['%s' % city] = df['ite_power'][:34560] / 1000
@@ -151,6 +151,6 @@ ax["ax5"].set_xlabel('Date')
 ax["ax3"].set_ylabel('Total Power Consumption (kW)', color='C0')
 ax_twin["ax3"].set_ylabel('Outdoor Air Temperature ($^{\circ}$C)', color='C1')
 plt.tight_layout()
-plt.savefig('Fig3_.pdf', format='pdf')
+plt.savefig('figures/Fig3.pdf', format='pdf')
 plt.show()
 

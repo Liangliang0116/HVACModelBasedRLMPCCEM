@@ -1,13 +1,13 @@
 import pickle
 import numpy as np
 import matplotlib
-matplotlib.rcParams['text.usetex'] = True
+# matplotlib.rcParams['text.usetex'] = True
 import matplotlib.pyplot as plt
-# plt.rcParams.update({'font.size': 12})
+plt.rcParams.update({'font.size': 12})
 
 matplotlib.rcParams['mathtext.fontset'] = 'stix'
 matplotlib.rcParams['font.family'] = 'STIXGeneral'
-matplotlib.rcParams.update({'font.size': 14})
+# matplotlib.rcParams.update({'font.size': 14})
 
 
 cities = ['Golden', 'SF', 'Sterling', 'Chicago', 'Tampa']
@@ -48,7 +48,7 @@ _, ax = plt.subplots(figsize=(8, 4))
 
 for city in cities:
     
-    with open('EnergyPlusSplitEpisodeWrapper-run_' + city + '/log.pkl', 'rb') as f:
+    with open('results/' + city + '/cem_rl/' + city + '-run1/log.pkl', 'rb') as f:
         data = pickle.load(f)
         average_scores_half['%s' % city] = data['average_score_half']
         
@@ -64,7 +64,7 @@ plt.xticks([0, 11.5, 23, 34.5, 46, 57.5, 69, 80.5, 92, 103.5, 115, 126.5],
 plt.xlabel('Month')
 plt.ylabel('Average fitness of the top 5 actors')
 plt.tight_layout()
-plt.savefig('Fig4_.pdf', format='pdf')
+plt.savefig('figures/Fig4.pdf', format='pdf')
 plt.show()
 
 
