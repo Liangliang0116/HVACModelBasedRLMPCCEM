@@ -1,8 +1,7 @@
-# ModelBasedRLCEMHVAC
-This repository is for the paper "An HVAC Control Approach via Combining Model-based Deep Reinforcement Learning and Model Predictive Control" (To be cited). We tested it with the Python version 3.8.10 on Ubuntu 20.04. The attached codes are mainly adapted from https://github.com/vermouth1992/mbrl-hvac and 
-https://github.com/apourchot/CEM-RL. 
+# MBRL-MC: An HVAC Control Approach via Combining Model-based Deep Reinforcement Learning and Model Predictive Control
 
-Some formats of the codes in this repository are not good. We discourage others to imitate them, and we will improve the formats in the future codes. The readers are encouraged to understand how the algorithm in the paper is coded and then write their codes with good formats. 
+This repository is for the paper "MBRL-MC: An HVAC Control Approach via Combining Model-based Deep Reinforcement Learning and Model Predictive Control". We run it with the Python version 3.8.10 on Ubuntu 20.04. The codes are mainly adapted from https://github.com/vermouth1992/mbrl-hvac and 
+https://github.com/apourchot/CEM-RL. 
 
 ## Requirements
 
@@ -15,12 +14,10 @@ pip install -r requirements.txt
 ```
 
 ### EnergyPlus
-Please follow https://github.com/IBM/rl-testbed-for-energyplus and install EnergyPlus version 9.2.0. Note that this repository is only tested on EnergyPlus version 9.2.0. It may encounter some unexpected issues with other EnergyPlus versions. 
+Please follow https://github.com/IBM/rl-testbed-for-energyplus and install EnergyPlus version 9.2.0. Note that this repository is only tested on EnergyPlus version 9.2.0. There mighe be some unexpected issues with other EnergyPlus versions for this repository. 
 
 ## Before Training
-Before training, the city information in the ```.bashrc``` file should be changed to the city whose weather data that you plan to use. Then, you should run ```outdoor_temp_extract.py``` in the folder ```outdoor_temp_extract``` to generate the relevant weather data file. 
-
-In addition, there are some lines in some ```.py``` files that need to be changed so that the assigned city is used during training. To modify these lines before training, I usually comment out the temperature data of the generated ```csv``` file. For example, when training with weather data in SF, I just rename the file ```interpolated_outdoor_temp_Sterling.csv``` to ```interpolated_outdoor_temp_Sterling_comment_out.csv```, and the same is true for other three remained cities. If you did not change the lines mentioned above, then there will be errors when you run, since the wrongly assigned ```.csv``` file cannot be found. You then track which lines you need to change then. 
+Before training, the city weather file information in ```.bashrc``` should be changed to the one corresponding to the city whose weather data that are to be used. 
 
 ## Training
 
