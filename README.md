@@ -21,31 +21,40 @@ Before training, the city weather file information in ```.bashrc``` should be ch
 
 ## Training
 
-To train the model-based RL with MPC and CEM (the proposed algorithm in this paper), run
+To train MBRL-MC, run
 ```train
-python train_model_based.py --city SF --mpc_horizon 5 --num_days_on_policy 10 --training_epochs 50 --num_years 2 --cem_rl --n_grad 5 --max_steps 19200 --start_steps 2000 --n_episode 960
+python train_model_based.py --city SF --mpc_horizon 5 --num_days_on_policy 10 --training_epochs 50 --num_years 2 --algorithm cem_rl --n_grad 5 --max_steps 19200 --start_steps 2000 --n_episode 960 --verbose
 ```
 
-To train the model-based RL with random shooting (RS), run
+To train the model-based RL with random shooting, run
 
 ```train
-python train_model_based.py --city SF --mpc_horizon 5 --num_days_on_policy 10 --training_epochs 50 --num_years 2 --n_grad 5 --max_steps 19200 --start_steps 2000 --n_episode 960
+python train_model_based.py --city SF --mpc_horizon 5 --num_days_on_policy 10 --training_epochs 50 --num_years 2 --algorithm random_shooting --n_grad 5 --max_steps 19200 --start_steps 2000 --n_episode 960 --verbose
 ```
 
-To train the model-based RL with dagger, run
+To train the model-based RL with imitation learning, run
 
 ```train
-python train_model_based.py --city SF --mpc_horizon 5 --num_days_on_policy 10 --training_epochs 50 --num_years 2 --dagger --n_grad 5 --max_steps 19200 --start_steps 2000 --n_episode 960
+python train_model_based.py --city SF --mpc_horizon 5 --num_days_on_policy 10 --training_epochs 50 --num_years 2 --algorithm imitation_learning --n_grad 5 --max_steps 19200 --start_steps 2000 --n_episode 960 --verbose
 ```
 
-It will create a folder called ``runs`` that includes all the state, action and rewards during the training.
-The EnergyPlus generated files will be in the ``log`` folder. 
-The generated files associated with the actors and critic will be in the ```results``` folder. 
+To train the PPO algorithm, run 
+```train
+python train_ppo.py --city SF
+```
+
+To run the PID, run
+```train
+python train_pid.py --city SF
+```
+
+The file ```.vscode/launch.json``` also shows the above training configurations. 
+
+All the results will be saved in ```results``` folder. 
 
 ## After Training 
 
-Run ```csv_compute.py``` to compute some further information for each obtained result. 
-Run ```indoor_temp_plot.py``` and ```score_plot.py``` to visualize the results. 
+Use ```plot/indoor_temp_plot.py```, ```plot/score_plot.py```, and ```plot/mf_mb_plot.py``` to visualize the results. 
 
 ### Available cities
 - SF
@@ -54,11 +63,6 @@ Run ```indoor_temp_plot.py``` and ```score_plot.py``` to visualize the results.
 - Sterling
 - Tampa 
 
-We also provide shell script file in case you want to run everything. Checkout
-- run_pid.sh
-- run_ppo.sh
-- run_model_based_plan.sh
-- run_model_based_dagger.sh
 
 ## Citation
 Please cite the papers that our codes are based on. 
