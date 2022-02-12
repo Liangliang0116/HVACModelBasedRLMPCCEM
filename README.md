@@ -1,52 +1,61 @@
-# Model-based Reinforcement Learning for Building HVAC Control
+# ModelBasedRLCEMHVAC
+This repository is for the paper "An HVAC Control Approach via Combining Model-based Deep Reinforcement Learning and Model Predictive Control" (To be cited). We tested it with the Python version 3.8.10 on Ubuntu 20.04. The attached codes are mainly adapted from https://github.com/vermouth1992/mbrl-hvac and 
+https://github.com/apourchot/CEM-RL. 
 
-This repository is the official implementation of [Building HVAC Scheduling Using Reinforcement Learning via Neural Network Based Model Approximation](https://arxiv.org/abs/1910.05313). 
+Some formats of the codes in this repository are not good. We discourage others to imitate them, and we will improve the formats in the future codes. The readers are encouraged to understand how the algorithm in the paper is coded and then write their codes with good formats. 
 
 ## Requirements
 
-To install requirements:
-### Python package
+The packages installed in the virtual environment are listed in ```requirements.txt```. You can install them by running
+
+### Python Setup
+
 ```setup
 pip install -r requirements.txt
 ```
 
 ### EnergyPlus
-Please follow https://github.com/IBM/rl-testbed-for-energyplus and install EnergyPlus version 9.1.0
+Please follow https://github.com/IBM/rl-testbed-for-energyplus and install EnergyPlus version 9.2.0. Note that this repository is only tested on EnergyPlus version 9.2.0. It may encounter some unexpected issues with other EnergyPlus versions. 
+
+## Before Training
+Before training, the city information in the ```.bashrc``` file should be changed to the city whose weather data that you plan to use. Then, you should run ```outdoor_temp_extract.py``` in the folder ```outdoor_temp_extract``` to generate the relevant weather data file. 
+
+In addition, there are some lines in some ```.py``` files that need to be changed so that the assigned city is used during training. To modify these lines before training, I usually comment out the temperature data of the generated ```csv``` file. For example, when training with weather data in SF, I just rename the file ```interpolated_outdoor_temp_Sterling.csv``` to ```interpolated_outdoor_temp_Sterling_comment_out.csv```, and the same is true for other three remained cities. If you did not change the lines mentioned above, then there will be errors when you run, since the wrongly assigned ```.csv``` file cannot be found. You then track which lines you need to change then. 
 
 ## Training
 
-To run the PID agent, run
-
+To train the model-based RL with MPC and CEM (the proposed algorithm in this paper), run
 ```train
-python train_pid.py --city SF
-```
-
-To train the PPO agent, run
-
-```train
-python train_ppo.py --city SF
+python train_model_based.py --city SF --mpc_horizon 5 --num_days_on_policy 10 --training_epochs 50 --num_years 2 --cem_rl --n_grad 5 --max_steps 19200 --start_steps 2000 --n_episode 960
 ```
 
 To train the model-based RL with random shooting (RS), run
 
 ```train
-python train_model_based.py --city SF --mpc_horizon 5 --num_days_on_policy 10 --training_epochs 100
+python train_model_based.py --city SF --mpc_horizon 5 --num_days_on_policy 10 --training_epochs 50 --num_years 2 --n_grad 5 --max_steps 19200 --start_steps 2000 --n_episode 960
 ```
 
 To train the model-based RL with dagger, run
 
 ```train
-python train_model_based.py --city SF --mpc_horizon 5 --num_days_on_policy 10 --training_epochs 100 --dagger
+python train_model_based.py --city SF --mpc_horizon 5 --num_days_on_policy 10 --training_epochs 50 --num_years 2 --dagger --n_grad 5 --max_steps 19200 --start_steps 2000 --n_episode 960
 ```
 
 It will create a folder called ``runs`` that includes all the state, action and rewards during the training.
-The EnergyPlus generated files will be in the ``log`` folder.
+The EnergyPlus generated files will be in the ``log`` folder. 
+The generated files associated with the actors and critic will be in the ```results``` folder. 
+
+## After Training 
+
+Run ```csv_compute.py``` to compute some further information for each obtained result. 
+Run ```indoor_temp_plot.py``` and ```score_plot.py``` to visualize the results. 
 
 ### Available cities
 - SF
 - Golden
 - Chicago
 - Sterling
+- Tampa 
 
 We also provide shell script file in case you want to run everything. Checkout
 - run_pid.sh
@@ -55,6 +64,8 @@ We also provide shell script file in case you want to run everything. Checkout
 - run_model_based_dagger.sh
 
 ## Citation
+Please cite the papers that our codes are based on. 
+
 ```bib
 @article{Zhang2019BuildingHS,
   title={Building HVAC Scheduling Using Reinforcement Learning via Neural Network Based Model Approximation},
@@ -63,7 +74,18 @@ We also provide shell script file in case you want to run everything. Checkout
   year={2019}
 }
 ```
-Please also cite the paper that introduces the environment
+
+```bib
+@article{pourchot2018cem,
+  title={CEM-RL: Combining evolutionary and gradient-based methods for policy search},
+  author={Pourchot, Alo{\"\i}s and Sigaud, Olivier},
+  journal={arXiv preprint arXiv:1810.01222},
+  year={2018}
+}
+```
+
+Please also cite the paper that introduces the environment.
+
 ```bib
 @InProceedings{10.1007/978-981-13-2853-4_4,
 author="Moriyama, Takao and De Magistris, Giovanni and Tatsubori, Michiaki and Pham, Tu-Hoa and Munawar, Asim and Tachibana, Ryuki",
@@ -76,4 +98,3 @@ pages="45--59",
 isbn="978-981-13-2853-4"
 }
 ```
-# ModeBasedRLMPCHVAC
