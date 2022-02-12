@@ -65,7 +65,7 @@ Use ```plot/indoor_temp_plot.py```, ```plot/score_plot.py```, and ```plot/mf_mb_
 
 
 ## Citation
-Please cite the papers that our codes are based on. 
+Our codes are based the codes of the following papers. Please also cite them when possible. 
 
 ```bib
 @article{Zhang2019BuildingHS,
