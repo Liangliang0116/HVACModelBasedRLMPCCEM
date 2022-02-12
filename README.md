@@ -85,7 +85,7 @@ Our codes are based the codes of the following papers. Please also cite them whe
 }
 ```
 
-Please also cite the paper that introduces the environment.
+Please also cite the paper that introduces the environment, if possible. 
 
 ```bib
 @InProceedings{10.1007/978-981-13-2853-4_4,
